@@ -30,7 +30,6 @@ def get_department_and_courses():
 
 
     updated_page_content = str(soup)
-
     # Extract the JavaScript variable 'courses' from the updated_page_content
     matches = re.search(r'var courses = (\[.*?\]);', updated_page_content, re.DOTALL)
     if matches:
@@ -45,7 +44,8 @@ def get_department_and_courses():
             time = course[5]
             details = course[6]
             link = course[7]
-            _course = Course(id, group, credit, title, instructor, time, details, link)
+            postgraduate = int(course[8]) != 0
+            _course = Course(id, group, credit, title, instructor, time, details, link, postgraduate)
             courses.append(_course)
     else:
         raise LookupError("No 'courses' variable found in the content.")
