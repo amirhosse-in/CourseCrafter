@@ -1,40 +1,69 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
 from models import *
 import edu
 
-
 class CourseBox:
-    def __init__(self, root, course, array):
+    def __init__(self, root, course, selected_courses, form):
         self.root = root
         self.course = course
-        self.array = array
+        self.selected_courses = selected_courses
+        self.form = form
 
-        self.background = "orange"
-        self.create_frame()
+        self.background = "#C08261"
+        self.default_block_width = 150
+        self.default_block_height = 50
+        self.frame1, self.frame2 = self.create_frame(0), self.create_frame(1)
 
-    def create_frame(self):
-        self.frame = tk.Frame(self.root, width=100, height=50, bg=self.background)
-        self.frame.place(x=500, y=50)
-        self.add_course_name()
-        self.add_course_instructor()
-        #self.add_delete_button()
+        self.form.total_credits += course.credit
+        self.form.root.title(f"Course Crafter - {self.form.total_credits} Credits selected")
 
-    def delete_box(self):
-        self.frame.destroy()  # Remove the frame from the GUI
-        self.array.remove(self)  # Remove the instance from the array
 
-    def add_delete_button(self):
-        delete_button = tk.Button(self.frame, text="X", command=self.delete_box)
-        delete_button.pack(side="bottom")
+    def create_frame(self, day):
+        if self.course.days[day] == None:
+            return None
+        x,y,height = self.calculate_position(day)
+        frame = tk.Frame(self.root, width=self.default_block_width-2, height=height-1, bg= self.background)
+        frame.propagate(False)
+        frame.place(x=x, y=y)
+        frame.bind("<Button-1>", self.delete_box)
 
-    def add_course_name(self):
-        name_label = tk.Label(self.frame, text=self.course.name, font=("TkDefaultFont", 11), bg=self.background)
+        self.add_course_name(frame)
+        self.add_course_id_and_group(frame)
+        self.add_course_instructor(frame)
+        return frame
+
+    def calculate_position(self, day):
+        pad_x = 1
+        pad_y = 25 + 1
+        x = (5 - self.course.days[day]) * self.default_block_width + pad_x # calculating top_left X
+        y = (self.course.start[0] - 7) * self.default_block_height + int((self.course.start[1]/60) * self.default_block_height) + pad_y # calculating top_left Y
+
+        height = int(((self.course.end[0] * 60 + self.course.end[1]) - (self.course.start[0] * 60 + self.course.start[1])) / 60 * self.default_block_height)
+        return x,y,height
+
+    def delete_box(self, event):
+        self.frame1.destroy()
+        if self.frame2 != None:
+            self.frame2.destroy()
+        self.selected_courses.remove(self)
+        self.form.total_credits -= self.course.credit
+        self.form.root.title(f"Course Crafter - {self.form.total_credits} Credits selected")
+
+
+    def add_course_name(self, root):
+        name_label = tk.Label(root, text=self.course.name, font=("TkDefaultFont", 12), bg=self.background, wraplength=self.default_block_width - 10)
         name_label.pack(side="top")
-    def add_course_instructor(self):
-        instructor_label = tk.Label(self.frame, text=self.course.instructor, font=("TkDefaultFont", 11), bg=self.background)
-        instructor_label.pack(side="top")
+
+    def add_course_id_and_group(self, root):
+        id_group = tk.Label(root, text = f"{self.course.id} - {self.course.group}",  font=("TkDefaultFont", 11), bg = self.background)
+        id_group.pack(side="top")
+
+    def add_course_instructor(self, root):
+        instructor_label = tk.Label(root, text=self.course.instructor, font=("TkDefaultFont", 11), bg=self.background)
+        instructor_label.pack(side="bottom", pady=5)
 
 
 class ScheduleForm:
@@ -46,37 +75,73 @@ class ScheduleForm:
         self.courses = courses
         self.showing_postgraduate = False
 
+        self.total_credits = 0
         self.listbox_courses = []
         self.grid_courses = []
         self.selected_department = None
         self.selected_course = None
 
-        self.canvas = tk.Canvas(self.root, width=1300, height=800)
+        self.canvas = tk.Canvas(self.root, width=1260, height=735)
         self.canvas.pack()
 
         self.create_left_frame()
+        self.create_right_frame()    
     
     def create_right_frame(self):
         self.days = ['پنجشنبه', 'چهار شنبه', 'سه شنبه', 'دوشنبه', 'یکشنبه', 'شنبه']
         self.hours = list(range(7, 21))
+        self.right_frame = tk.Frame(self.root)
+        self.create_days(self.right_frame)
+        self.right_frame.place(x = 320, y = 5)
 
-    def create_days(self, root):
-        days_frame = tk.Frame(root, bg = "orange")
         
-        #TODO
+    def create_days(self, root):
+        self.grid_frame = tk.Frame(root)
+        width = 150
+        height = 50
+        
+        # putting days
+        days_frame = tk.Frame(self.grid_frame)
+        for i in range(len(self.days)):
+            day_frame = tk.Frame(days_frame, width=width, height=height*0.5)
+            label = tk.Label(day_frame, text=self.days[i])
+            label.pack(side="top", anchor="center")
+            day_frame.propagate(False)
+            day_frame.pack(side="left")
+        # putting clock column
+        clock_frame = tk.Frame(days_frame, width=width/2, height=height*0.3)
+        clock_frame.pack(side="left")
+        days_frame.pack(side="top")       
 
-        days_frame.pack(side="top")
+        # putting other rows:
+        for i in range(len(self.hours)):
+            row_frame = tk.Frame(self.grid_frame)
+            for j in range(len(self.days)):
+                raw_frame = tk.Frame(row_frame, width=width, height=height, highlightbackground="white", highlightthickness=1)
+                raw_frame.propagate(False)
+                label = tk.Label(raw_frame)
+                label.pack(side="top", anchor="center")
+                raw_frame.pack(side="left")
+            clock_frame = tk.Frame(row_frame, width=width/2, height=height)
+            label = tk.Label(clock_frame, text = f"{self.hours[i]}:00")
+            label.pack(side="top", anchor="sw",pady=0)
+            clock_frame.propagate(False)
+            clock_frame.pack(side="left")
+            row_frame.pack(side="top")
+
+        self.grid_frame.pack(side="right")
 
 
     def create_left_frame(self):
         self.left_frame = tk.Frame(self.root, height=750, width=300)
-        self.left_frame.place(x=10, y=15)
+        self.left_frame.place(x = 10, y = 10)
         
         self.create_left_first_row(self.left_frame)
         self.create_search_box(self.left_frame)
         self.create_listbox(self.left_frame)
         self.create_course_info(self.left_frame)
-        self.create_add_button(self.left_frame)
+        self.create_buttons(self.left_frame)
+
 
     def create_left_first_row(self, root):
         self.left_first_row = tk.Frame(root)
@@ -157,7 +222,7 @@ class ScheduleForm:
         # Create a Listbox widget
         list_frame = tk.Frame(root)
 
-        self.listbox = tk.Listbox(list_frame, selectmode=tk.NONE, font=("Helvetica", 15), justify="right",height=25)
+        self.listbox = tk.Listbox(list_frame, selectmode=tk.NONE, font=("Helvetica", 15), justify="right",height=22)
         self.listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         self.listbox.pack(side="left", fill="both", padx=0, pady=0)
 
@@ -186,6 +251,8 @@ class ScheduleForm:
 
             self.details_label.config(text=course_info)
 
+
+
     def create_course_info(self, root):
         self.course_info_frame = tk.Frame(root, height=230, width=290)
         self.course_info_frame.pack(side="top")
@@ -193,21 +260,61 @@ class ScheduleForm:
             self.course_info_frame, text="اطلاعات درس", anchor="e", justify="right", wraplength=270)
         self.details_label.place(x=0, y=0, width=290)
 
-    def create_add_button(self, root):
-        self.add_course_button = tk.Button(root, text="اضافه کردن درس", command=self.add_course)
-        self.add_course_button.pack(side="top", fill="y")
+    def create_buttons(self, root):
+        buttons_frame = tk.Frame(root)
+
+        self.add_course_button = tk.Button(buttons_frame, text="اضافه کردن درس", command=self.add_course)
+        self.add_course_button.pack(side="right", fill="y")
+
+        self.save_course_button = tk.Button(buttons_frame, text = "Save", command=self.save)
+        self.save_course_button.pack(side="left", fill="y")
+
+        self.load_course_button = tk.Button(buttons_frame, text = "Load", command=self.load)
+        self.load_course_button.pack(side="left", fill="y")
+
+        buttons_frame.pack(side="top")
 
     def add_course(self):
         if self.selected_course == None or self.selected_course.time == "":
             messagebox.showerror("Error", "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.", icon="error")
+        elif self.check_conflict():
+            messagebox.showerror("Error", "The course has conflict with your selected courses.", icon="error")
         else:
-            #self.grid_courses
-            course_box = CourseBox(self.root, self.selected_course, self.grid_courses)
+            course_box = CourseBox(self.grid_frame, self.selected_course, self.grid_courses, self)
+            self.grid_courses.append(course_box)
+
+    def check_conflict(self):
+        for course_box in self.grid_courses:
+            course = course_box.course
+            if Course.check_conflict(self.selected_course, course):
+                return True
+        return False
+            
 
     def update_listbox(self):
         # Insert items into the Listbox
         for course in self.listbox_courses:
             self.listbox.insert(tk.END, course.name)
+    
+    def save(self):
+        file = filedialog.asksaveasfile(title = "Save File", defaultextension=".cc")
+        if file:
+            courses = []
+            for course_box in self.grid_courses:
+                courses.append(course_box.course)
+            Course.save_to_file(courses, file.name)
+            messagebox.showinfo("Done", "Saved succesfully!", icon="info")
+        else:
+            messagebox.showerror("Error", "Error.", icon="error")
+
+    def load(self):
+        file = filedialog.askopenfile(title="Open", defaultextension=".cc")
+        if file:
+            courses = Course.read_from_file(file.name)
+            for course in courses:
+                course_box = CourseBox(self.grid_frame, course, self.grid_courses, self)
+                self.grid_courses.append(course_box)
+            messagebox.showinfo("Done", "Done!", icon="info")
 
 
 if __name__ == "__main__":

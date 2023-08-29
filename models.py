@@ -93,6 +93,17 @@ class Course:
         else:
             return [int(hour_in_str), 0]
 
+    @staticmethod
+    def check_conflict(course1, course2):
+        if course1.end <= course2.start or course1.start >= course2.end:
+            return False
+        if course1.days[0] == course2.days[0]:
+            return True
+        if course1.days[1] != None and course1.days[1] == course2.days[0]:
+            return True
+        if course2.days[1] != None and course2.days[1] == course1.days[0]:
+            return True
+        return False
     def get_searchable_string(self):
         return f"{self.id} {self.name} {self.instructor} {self.details}"
 
