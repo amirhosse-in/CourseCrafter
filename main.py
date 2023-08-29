@@ -1,4 +1,4 @@
-import tkinter as tk
+﻿import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
@@ -263,7 +263,7 @@ class ScheduleForm:
     def create_buttons(self, root):
         buttons_frame = tk.Frame(root)
 
-        self.add_course_button = tk.Button(buttons_frame, text="اضافه کردن درس", command=self.add_course)
+        self.add_course_button = tk.Button(buttons_frame, text="Add Course", command=self.add_course)
         self.add_course_button.pack(side="right", fill="y")
 
         self.save_course_button = tk.Button(buttons_frame, text = "Save", command=self.save)
@@ -312,11 +312,18 @@ class ScheduleForm:
         if file:
             courses = Course.read_from_file(file.name)
             for course in courses:
+                if self.already_exist(course):
+                    continue
                 course_box = CourseBox(self.grid_frame, course, self.grid_courses, self)
                 self.grid_courses.append(course_box)
             messagebox.showinfo("Done", "Done!", icon="info")
 
-
+    def already_exist(self, course):
+        for course_box in self.grid_courses:
+            _course = course_box.course
+            if _course.id == course.id and _course.group == course.group:
+                return True
+        return False
 if __name__ == "__main__":
 
     try:
