@@ -203,7 +203,7 @@ class ScheduleForm:
 
         secondary_listbox_courses = []
 
-        search_text = self.search_entry.get().lower().split(' ')
+        search_text = (self.search_entry.get().lower()).replace('ك','ک').replace('ي', 'ی').split(' ')
 
         for course in self.listbox_courses:
             course_string = course.get_searchable_string()

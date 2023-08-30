@@ -105,5 +105,5 @@ class Course:
             return True
         return False
     def get_searchable_string(self):
-        return f"{self.id} {self.name} {self.instructor} {self.details}"
+        return (f"{self.id} {self.name} {self.instructor} {self.details}").replace('ك','ک').replace('ي', 'ی')
 
