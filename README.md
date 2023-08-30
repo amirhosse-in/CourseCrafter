@@ -10,7 +10,7 @@ CourseCrafter automates the process of updating course information, so you don't
 
 Before running the CourseCrafter project, ensure you have the following installed:
 
-- Python 3
+- ### Python 3.11
 - `tkinter` library
 - `pickle` library
 - `re` library
