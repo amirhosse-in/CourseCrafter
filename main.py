@@ -55,14 +55,17 @@ class CourseBox:
 
     def add_course_name(self, root):
         name_label = tk.Label(root, text=self.course.name, font=("TkDefaultFont", 12), bg=self.background, wraplength=self.default_block_width - 10)
+        name_label.bind("<Button-1>", self.delete_box)
         name_label.pack(side="top")
 
     def add_course_id_and_group(self, root):
         id_group = tk.Label(root, text = f"{self.course.id} - {self.course.group}",  font=("TkDefaultFont", 11), bg = self.background)
+        id_group.bind("<Button-1>", self.delete_box)
         id_group.pack(side="top")
 
     def add_course_instructor(self, root):
         instructor_label = tk.Label(root, text=self.course.instructor, font=("TkDefaultFont", 11), bg=self.background)
+        instructor_label.bind("<Button-1>", self.delete_box)
         instructor_label.pack(side="bottom", pady=5)
 
 
