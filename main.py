@@ -235,6 +235,7 @@ class ScheduleForm:
         scrollbar.pack(side="right",fill="both", padx=0)
 
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
+        self.listbox.bind("<Double-1>", self.add_course)
 
         list_frame.pack(side="top", fill="x", pady = 5)
 
@@ -277,7 +278,7 @@ class ScheduleForm:
 
         buttons_frame.pack(side="top")
 
-    def add_course(self):
+    def add_course(self, event = None):
         if self.selected_course == None or self.selected_course.time == "":
             messagebox.showerror("Error", "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.", icon="error")
         elif self.check_conflict():
