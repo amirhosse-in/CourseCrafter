@@ -103,6 +103,8 @@ class Course:
             return True
         if course2.days[1] != None and course2.days[1] == course1.days[0]:
             return True
+        if course1.days[1] != None and course2.days[1] != None and course2.days[1] == course1.days[1]:
+            return True
         return False
 
     def get_searchable_string(self):

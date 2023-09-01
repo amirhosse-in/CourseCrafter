@@ -7,15 +7,15 @@ import edu
 
 
 class CourseBox:
-    def __init__(self, root, course, selected_courses, form, count=0):
+    def __init__(self, root, course, selected_courses, form, layer=0):
         self.root = root
         self.course = course
         self.selected_courses = selected_courses
         self.form = form
-        self.conflicts = count
+        self.layer = layer
 
         self.background = ["#C08261", "#C0A261", "#C0C061", "#AEC061", "#61C0A2",
-                           "#61C0C0", "#61AEC0", "#6161C0", "#A261C0", "#C061C0", "#C061A2"][count % 11]
+                           "#61C0C0", "#61AEC0", "#6161C0", "#A261C0", "#C061C0", "#C061A2"][layer % 11]
         self.default_block_width = 150
         self.default_block_height = 50
         self.frame1, self.frame2 = self.create_frame(0), self.create_frame(1)
@@ -29,15 +29,26 @@ class CourseBox:
             return None
         x, y, height = self.calculate_position(day)
         frame = tk.Frame(self.root, width=self.default_block_width - 2 -
-                         self.conflicts * 5, height=height-1 - self.conflicts * 3, bg=self.background)
+                         self.layer * 5, height=height-1 - self.layer * 3, bg=self.background)
         frame.propagate(False)
-        frame.place(x=x + self.conflicts * 5, y=y + self.conflicts * 3)
+        frame.place(x=x + self.layer * 5, y=y + self.layer * 3)
         frame.bind("<Button-1>", self.delete_box)
+        frame.bind("<Enter>", self.add_hover)
+        frame.bind("<Leave>", self.remove_hover)
 
         self.add_course_name(frame)
         self.add_course_id_and_group(frame)
         self.add_course_instructor(frame)
         return frame
+
+    def add_hover(self, event):
+        if self not in self.form.hovered:
+            self.form.hovered.add(self)
+            self.form.update_hovered()
+
+    def remove_hover(self, event):
+        self.form.hovered.remove(self)
+        self.form.update_hovered()
 
     def calculate_position(self, day):
         pad_x = 1
@@ -53,8 +64,9 @@ class CourseBox:
 
     def delete_box(self, event):
         self.frame1.destroy()
-        if self.frame2 != None:
+        if self.frame2 is not None:
             self.frame2.destroy()
+        self.form.hovered.remove(self)
         self.selected_courses.remove(self)
         self.form.total_credits -= self.course.credit
         self.form.root.title(
@@ -96,6 +108,8 @@ class ScheduleForm:
 
         self.canvas = tk.Canvas(self.root, width=1260, height=735)
         self.canvas.pack()
+
+        self.hovered = set()
 
         self.create_left_frame()
         self.create_right_frame()
@@ -296,21 +310,44 @@ class ScheduleForm:
             messagebox.showerror(
                 "Error", "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.", icon="error")
             return
-        if self.count_conflict() > 0:
+        if self.is_in_courses():
+            messagebox.showerror(
+                "Error", "The course is already in the schedule.", icon="error")
+            return
+        if self.get_layer() > 0:
             course_box = CourseBox(
-                self.grid_frame, self.selected_course, self.grid_courses, self, count=self.count_conflict())
+                self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer())
         else:
             course_box = CourseBox(
                 self.grid_frame, self.selected_course, self.grid_courses, self)
         self.grid_courses.append(course_box)
 
-    def count_conflict(self):
-        count = 0
+    def is_in_courses(self):
+        for course_box in self.grid_courses:
+            course = course_box.course
+            if course.id == self.selected_course.id and course.group == self.selected_course.group:
+                return True
+        return False
+
+    def get_layer(self):
+        layer = 0
         for course_box in self.grid_courses:
             course = course_box.course
             if Course.check_conflict(self.selected_course, course):
-                count += 1
-        return count
+                layer = max(layer, course_box.layer + 1)
+        return layer
+
+    def update_hovered(self):
+        if len(self.hovered) != 0:
+            courses = sorted(list(self.hovered), key=lambda x: x.layer)
+        else:
+            courses = sorted(self.grid_courses, key=lambda x: x.layer)
+        for course_box in courses:
+            course_box.frame1.destroy()
+            if course_box.frame2 is not None:
+                course_box.frame2.destroy()
+            course_box.frame1 = course_box.create_frame(0)
+            course_box.frame2 = course_box.create_frame(1)
 
     def update_listbox(self):
         # Insert items into the Listbox
