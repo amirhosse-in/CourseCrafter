@@ -341,5 +341,6 @@ if __name__ == "__main__":
         edu.Department.save_to_file(departments, "departments.cc")
 
     root = tk.Tk()
+    root.minsize(1250, 850)
     app = ScheduleForm(root, departments, courses)
     root.mainloop()
