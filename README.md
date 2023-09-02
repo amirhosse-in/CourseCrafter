@@ -3,8 +3,10 @@
 CourseCrafter is a Python project modeled after the *term.inator* project. It's designed to simplify the process of pre-choosing courses for a semester. The project provides a user-friendly interface to select courses based on your preferences and schedule.
 
 ## Overview
+CourseCrafter automates the course information update process, relieving you of the need to be concerned about keeping the database current. The application automatically fetches the latest course data from edu.sharif.edu/list/courses and updates itself accordingly.
 
-CourseCrafter automates the process of updating course information, so you don't need to worry about keeping the database up to date. The application automatically requests the latest course information from `edu.sharif.edu/list/courses` and updates itself accordingly. If you wish to update the courses list, you have to remove the `.cc` files located next to the `.py` files.
+## Updating the Courses List
+To refresh the courses list, simply delete the .cc files located alongside the .py files and execute the program.
 
 ## Requirements
 
