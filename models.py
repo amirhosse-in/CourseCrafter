@@ -6,6 +6,9 @@ class Department:
     def __init__(self, department_id, department_name):
         self.id = department_id
         self.name = department_name
+    
+    def __repr__(self):
+        return self.name
 
     @staticmethod
     def save_to_file(array, address):
@@ -34,6 +37,9 @@ class Course:
             self.days, self.start, self.end = Course.get_day_and_hour(time)
         except:
             print(f"There is no time for Course {id}:{name}")
+        
+    def __repr__(self):
+        return f'{self.name} {self.instructor} {self.group}'
 
     @staticmethod
     def save_to_file(array, address):
