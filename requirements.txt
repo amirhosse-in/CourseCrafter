@@ -1,2 +1,4 @@
+arabic_reshaper==3.0.0
 beautifulsoup4==4.12.2
+python_bidi==0.4.2
 Requests==2.31.0
