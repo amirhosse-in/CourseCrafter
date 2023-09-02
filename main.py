@@ -26,6 +26,9 @@ class CourseBox:
         self.form.total_credits += course.credit
         self.form.root.title(
             f"Course Crafter - {self.form.total_credits} Credits selected")
+    
+    def __repr__(self):
+        return f'{self.course} {self.layer}'
 
     def create_frame(self, day):
         if self.course.days[day] == None:
@@ -326,30 +329,23 @@ class ScheduleForm:
                 "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.",
                 icon="error")
             return
-        if self.is_in_courses():
+        if self.already_exist(self.selected_course):
             messagebox.showerror(
                 "Error", "The course is already in the schedule.", icon="error")
             return
-        if self.get_layer() > 0:
+        if self.get_layer(self.selected_course) > 0:
             course_box = CourseBox(
-                self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer())
+                self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer(self.selected_course))
         else:
             course_box = CourseBox(
                 self.grid_frame, self.selected_course, self.grid_courses, self)
         self.grid_courses.append(course_box)
 
-    def is_in_courses(self):
-        for course_box in self.grid_courses:
-            course = course_box.course
-            if course.id == self.selected_course.id and course.group == self.selected_course.group:
-                return True
-        return False
-
-    def get_layer(self):
+    def get_layer(self, course):
         layer = 0
         for course_box in self.grid_courses:
-            course = course_box.course
-            if Course.check_conflict(self.selected_course, course):
+            _course = course_box.course
+            if Course.check_conflict(course, _course):
                 layer = max(layer, course_box.layer + 1)
         return layer
 
@@ -390,8 +386,12 @@ class ScheduleForm:
             for course in courses:
                 if self.already_exist(course):
                     continue
-                course_box = CourseBox(
-                    self.grid_frame, course, self.grid_courses, self)
+                if self.get_layer(course) > 0:
+                    course_box = CourseBox(
+                        self.grid_frame, course, self.grid_courses, self, layer=self.get_layer(course))
+                else:
+                    course_box = CourseBox(
+                        self.grid_frame, course, self.grid_courses, self)
                 self.grid_courses.append(course_box)
             messagebox.showinfo("Done", "Done!", icon="info")
 
