@@ -4,6 +4,7 @@ import re
 import json
 from models import *
 
+
 def get_department_and_courses():
     departments = []
     courses = []
@@ -28,10 +29,10 @@ def get_department_and_courses():
         department = Department(value, text)
         departments.append(department)
 
-
     updated_page_content = str(soup)
     # Extract the JavaScript variable 'courses' from the updated_page_content
-    matches = re.search(r'var courses = (\[.*?\]);', updated_page_content, re.DOTALL)
+    matches = re.search(
+        r'var courses = (\[.*?\]);', updated_page_content, re.DOTALL)
     if matches:
         courses_js = matches.group(1)
         courses_list = json.loads(courses_js)
@@ -45,7 +46,8 @@ def get_department_and_courses():
             details = course[6]
             link = course[7]
             postgraduate = int(course[8]) != 0
-            _course = Course(id, group, credit, title, instructor, time, details, link, postgraduate)
+            _course = Course(id, group, credit, title, instructor,
+                             time, details, link, postgraduate)
             courses.append(_course)
     else:
         raise LookupError("No 'courses' variable found in the content.")
