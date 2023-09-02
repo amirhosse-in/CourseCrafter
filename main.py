@@ -1,9 +1,13 @@
-﻿import tkinter as tk
+﻿import os
+import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import Text
 from models import *
+from bidi.algorithm import get_display
 import edu
+import arabic_reshaper
 
 
 class CourseBox:
@@ -29,7 +33,7 @@ class CourseBox:
             return None
         x, y, height = self.calculate_position(day)
         frame = tk.Frame(self.root, width=self.default_block_width - 2 -
-                         self.layer * 5, height=height-1 - self.layer * 3, bg=self.background)
+                                          self.layer * 5, height=height - 1 - self.layer * 3, bg=self.background)
         frame.propagate(False)
         frame.place(x=x + self.layer * 5, y=y + self.layer * 3)
         frame.bind("<Button-1>", self.delete_box)
@@ -56,10 +60,10 @@ class CourseBox:
         # calculating top_left X
         x = (5 - self.course.days[day]) * self.default_block_width + pad_x
         y = (self.course.start[0] - 7) * self.default_block_height + int(
-            (self.course.start[1]/60) * self.default_block_height) + pad_y  # calculating top_left Y
+            (self.course.start[1] / 60) * self.default_block_height) + pad_y  # calculating top_left Y
 
         height = int(((self.course.end[0] * 60 + self.course.end[1]) - (
-            self.course.start[0] * 60 + self.course.start[1])) / 60 * self.default_block_height)
+                self.course.start[0] * 60 + self.course.start[1])) / 60 * self.default_block_height)
         return x, y, height
 
     def delete_box(self, event):
@@ -73,19 +77,19 @@ class CourseBox:
             f"Course Crafter - {self.form.total_credits} Credits selected")
 
     def add_course_name(self, root):
-        name_label = tk.Label(root, text=self.course.name, font=(
+        name_label = tk.Label(root, text=to_persian(self.course.name), font=(
             "Calibri", 11), bg=self.background, wraplength=self.default_block_width - 10)
         name_label.bind("<Button-1>", self.delete_box)
         name_label.pack(side="top")
 
     def add_course_id_and_group(self, root):
-        id_group = tk.Label(root, text=f"{self.course.id} - {self.course.group}",  font=(
+        id_group = tk.Label(root, text=f"{self.course.id} - {self.course.group}", font=(
             "Calibri", 9), bg=self.background)
         id_group.bind("<Button-1>", self.delete_box)
         id_group.pack(side="top")
 
     def add_course_instructor(self, root):
-        instructor_label = tk.Label(root, text=self.course.instructor, font=(
+        instructor_label = tk.Label(root, text=to_persian(self.course.instructor), font=(
             "Calibri", 10), bg=self.background)
         instructor_label.bind("<Button-1>", self.delete_box)
         instructor_label.pack(side="bottom", pady=5)
@@ -117,6 +121,10 @@ class ScheduleForm:
     def create_right_frame(self):
         self.days = ['پنجشنبه', 'چهار شنبه',
                      'سه شنبه', 'دوشنبه', 'یکشنبه', 'شنبه']
+
+        # reshape each day
+        self.days = [to_persian(day) for day in self.days]
+
         self.hours = list(range(7, 21))
         self.right_frame = tk.Frame(self.root)
         self.create_days(self.right_frame)
@@ -130,13 +138,13 @@ class ScheduleForm:
         # putting days
         days_frame = tk.Frame(self.grid_frame)
         for i in range(len(self.days)):
-            day_frame = tk.Frame(days_frame, width=width, height=height*0.5)
+            day_frame = tk.Frame(days_frame, width=width, height=height * 0.5)
             label = tk.Label(day_frame, text=self.days[i])
             label.pack(side="top", anchor="center")
             day_frame.propagate(False)
             day_frame.pack(side="left")
         # putting clock column
-        clock_frame = tk.Frame(days_frame, width=width/2, height=height*0.3)
+        clock_frame = tk.Frame(days_frame, width=width / 2, height=height * 0.3)
         clock_frame.pack(side="left")
         days_frame.pack(side="top")
 
@@ -150,7 +158,7 @@ class ScheduleForm:
                 label = tk.Label(raw_frame)
                 label.pack(side="top", anchor="center")
                 raw_frame.pack(side="left")
-            clock_frame = tk.Frame(row_frame, width=width/2, height=height)
+            clock_frame = tk.Frame(row_frame, width=width / 2, height=height)
             label = tk.Label(clock_frame, text=f"{self.hours[i]}:00")
             label.pack(side="top", anchor="sw", pady=0)
             clock_frame.propagate(False)
@@ -182,7 +190,8 @@ class ScheduleForm:
         self.checkbox_var.set(False)
 
         self.checkbox = tk.Checkbutton(
-            root, text="تحصیلات تکمیلی", variable=self.checkbox_var, command=lambda: self.update_department())
+            root, text=to_persian("تحصیلات تکمیلی"), variable=self.checkbox_var,
+            command=lambda: self.update_department())
         self.checkbox.pack(side="left")
 
     def create_combo(self, root):
@@ -192,6 +201,9 @@ class ScheduleForm:
         for department in self.departments:
             names.append(department.name)
             ids.append(department.id)
+
+        # convert to persian
+        names = [to_persian(name) for name in names]
 
         self.selected_item = tk.StringVar(value=names[0])
         self.combo = ttk.Combobox(
@@ -271,13 +283,16 @@ class ScheduleForm:
             index = int(selected_index[0])
             self.selected_course = self.listbox_courses[index]
             course_info = f"کد درس: {self.selected_course.id}\n" \
-                f"نام درس: {self.selected_course.name}\n" \
-                f"گروه: {self.selected_course.group}\n" \
-                f"واحد: {self.selected_course.credit}\n" \
-                f"مدرس: {self.selected_course.instructor}\n" \
-                f"زمان کلاس: {self.selected_course.time}\n" \
-                f"توضیحات: {self.selected_course.details}\n" \
-                f"کلاس مجازی:\n{self.selected_course.virtual_class}"
+                          f"نام درس: {self.selected_course.name}\n" \
+                          f"گروه: {self.selected_course.group}\n" \
+                          f"واحد: {self.selected_course.credit}\n" \
+                          f"مدرس: {self.selected_course.instructor}\n" \
+                          f"زمان کلاس: {self.selected_course.time}\n" \
+                          f"توضیحات: {self.selected_course.details}\n" \
+                          f"کلاس مجازی:\n{self.selected_course.virtual_class}"
+
+            # Reshape the text
+            course_info = to_persian(course_info)
 
             self.details_label.config(text=course_info)
 
@@ -285,7 +300,7 @@ class ScheduleForm:
         self.course_info_frame = tk.Frame(root, height=230, width=290)
         self.course_info_frame.pack(side="top")
         self.details_label = tk.Label(
-            self.course_info_frame, text="اطلاعات درس", anchor="e", justify="right", wraplength=270)
+            self.course_info_frame, text=to_persian("اطلاعات درس"), anchor="e", justify="right", wraplength=270)
         self.details_label.place(x=0, y=0, width=290)
 
     def create_buttons(self, root):
@@ -308,7 +323,9 @@ class ScheduleForm:
     def add_course(self, event=None):
         if self.selected_course == None or self.selected_course.time == "":
             messagebox.showerror(
-                "Error", "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.", icon="error")
+                "Error",
+                "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.",
+                icon="error")
             return
         if self.is_in_courses():
             messagebox.showerror(
@@ -352,7 +369,8 @@ class ScheduleForm:
     def update_listbox(self):
         # Insert items into the Listbox
         for course in self.listbox_courses:
-            self.listbox.insert(tk.END, course.name)
+            # convert the name to persian
+            self.listbox.insert(tk.END, to_persian(course.name))
 
     def save(self):
         file = filedialog.asksaveasfile(
@@ -386,6 +404,13 @@ class ScheduleForm:
         return False
 
 
+def to_persian(txt):
+    # check if OS is mac or windows and not linux then return the text
+    if os.name == "posix" and os.uname().sysname == "Linux":
+        return get_display(arabic_reshaper.reshape(txt))
+    return txt
+
+
 if __name__ == "__main__":
     try:
         # Reading saved information
@@ -401,3 +426,4 @@ if __name__ == "__main__":
     root.minsize(1250, 850)
     app = ScheduleForm(root, departments, courses)
     root.mainloop()
+
