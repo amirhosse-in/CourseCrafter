@@ -11,12 +11,10 @@ CourseCrafter automates the process of updating course information, so you don't
 Before running the CourseCrafter project, ensure you have the following installed:
 
 - ### Python 3.11
-- `tkinter` library
-- `pickle` library
-- `re` library
 - `bs4` (Beautiful Soup) library
-- `json` library
 - `requests` library
+- `arabic_reshaper` library
+- `python_bidi` library
 
 ## Running the Project
 
