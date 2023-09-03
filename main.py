@@ -120,6 +120,9 @@ class ScheduleForm:
         self.create_left_frame()
         self.create_right_frame()
 
+        self.root.bind('<Control-s>', self.save)
+        self.root.bind('<Control-o>', self.load)
+
     def create_right_frame(self):
         self.days = ['پنجشنبه', 'چهار شنبه',
                      'سه شنبه', 'دوشنبه', 'یکشنبه', 'شنبه']
@@ -177,7 +180,6 @@ class ScheduleForm:
         self.create_search_box(self.left_frame)
         self.create_listbox(self.left_frame)
         self.create_course_info(self.left_frame)
-        self.create_buttons(self.left_frame)
 
     def create_left_first_row(self, root):
         self.left_first_row = tk.Frame(root)
@@ -305,23 +307,6 @@ class ScheduleForm:
             self.course_info_frame, text=to_persian("اطلاعات درس"), anchor="e", justify="right", wraplength=270)
         self.details_label.place(x=0, y=0, width=290)
 
-    def create_buttons(self, root):
-        buttons_frame = tk.Frame(root)
-
-        self.add_course_button = tk.Button(
-            buttons_frame, text="Add Course", command=self.add_course)
-        self.add_course_button.pack(side="right", fill="y")
-
-        self.save_course_button = tk.Button(
-            buttons_frame, text="Save", command=self.save)
-        self.save_course_button.pack(side="left", fill="y")
-
-        self.load_course_button = tk.Button(
-            buttons_frame, text="Load", command=self.load)
-        self.load_course_button.pack(side="left", fill="y")
-
-        buttons_frame.pack(side="top")
-
     def add_course(self, event=None):
         if self.selected_course == None or self.selected_course.time == "":
             messagebox.showerror(
@@ -367,7 +352,7 @@ class ScheduleForm:
             # convert the name to persian
             self.listbox.insert(tk.END, to_persian(course.name))
 
-    def save(self):
+    def save(self, event=None):
         file = filedialog.asksaveasfile(
             title="Save File", defaultextension=".cc")
         if file:
@@ -379,7 +364,7 @@ class ScheduleForm:
         else:
             messagebox.showerror("Error", "Error.", icon="error")
 
-    def load(self):
+    def load(self, event=None):
         file = filedialog.askopenfile(title="Open", defaultextension=".cc")
         if file:
             courses = Course.read_from_file(file.name)
@@ -422,7 +407,13 @@ if __name__ == "__main__":
         edu.Department.save_to_file(departments, "departments.cc")
 
     root = tk.Tk()
-    root.minsize(1250, 850)
+    root.minsize(1250, 750)
+    menu = tk.Menu(root)
+    root.config(menu=menu)
+    file_menu = tk.Menu(menu)
+    menu.add_cascade(label="File", menu=file_menu)
+    file_menu.add_command(label="Save", command=lambda: ScheduleForm.save())
+    file_menu.add_command(label="Load", command=lambda: ScheduleForm.load())
     app = ScheduleForm(root, departments, courses)
     root.mainloop()
 
