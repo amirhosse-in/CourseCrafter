@@ -159,8 +159,8 @@ class ScheduleForm:
         table.pack(fill="both", expand=True)
         for _course in self.grid_courses:
             course = _course.course
-            table.insert("", "end", text=course.id, values=(course.name,
-                         course.group, course.credit, course.instructor, course.final, course.time))
+            table.insert("", "end", text=course.id, values=(to_persian(course.name),
+                         course.group, course.credit, to_persian(course.instructor), course.final, to_persian(course.time)))
 
     def get_finals(self):
         login_window = tk.Toplevel(self.root)
