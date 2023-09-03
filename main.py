@@ -134,6 +134,33 @@ class ScheduleForm:
         course_menu = tk.Menu(menu)
         menu.add_cascade(label="Course", menu=course_menu)
         course_menu.add_command(label="Get Finals", command=self.get_finals)
+        course_menu.add_command(label="Show Table", command=self.show_table)
+
+    def show_table(self):
+        table_window = tk.Toplevel(self.root)
+        table_window.title("Table")
+        table_window.geometry("800x500")
+        table = ttk.Treeview(table_window, columns=(
+            "name", "group", "credit", "instructor", "final", "time"))
+        table.heading("#0", text=to_persian("کد درس"), anchor='e')
+        table.heading("name", text=to_persian("نام درس"), anchor='e')
+        table.heading("group", text=to_persian("شماره گروه"), anchor='e')
+        table.heading("credit", text=to_persian("تعداد واحد"), anchor='e')
+        table.heading("instructor", text=to_persian("مدرس"), anchor='e')
+        table.heading("final", text=to_persian("امتحان"), anchor='e')
+        table.heading("time", text=to_persian("زمان"), anchor='e')
+        table.column("#0", width=50, anchor='e')
+        table.column("name", width=100, anchor='e')
+        table.column("group", width=50, anchor='e')
+        table.column("credit", width=50, anchor='e')
+        table.column("instructor", width=100, anchor='e')
+        table.column("final", width=50, anchor='e')
+        table.column("time", width=100, anchor='e')
+        table.pack(fill="both", expand=True)
+        for _course in self.grid_courses:
+            course = _course.course
+            table.insert("", "end", text=course.id, values=(to_persian(course.name),
+                         course.group, course.credit, to_persian(course.instructor), course.final, to_persian(course.time)))
 
     def get_finals(self):
         login_window = tk.Toplevel(self.root)
