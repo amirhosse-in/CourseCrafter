@@ -11,22 +11,27 @@ import threading
 
 
 class CourseBox:
-    def __init__(self, root, course, selected_courses, form, layer=0):
+    def __init__(self, root, course, selected_courses, form, layer=0, is_hovered=False):
         self.root = root
         self.course = course
         self.selected_courses = selected_courses
         self.form = form
         self.layer = layer
 
-        self.background = ["#C08261", "#C0A261", "#C0C061", "#AEC061", "#61C0A2",
-                           "#61C0C0", "#61AEC0", "#6161C0", "#A261C0", "#C061C0", "#C061A2"][layer % 11]
+        if not is_hovered:
+            self.background = ["#C08261", "#C0A261", "#C0C061", "#AEC061", "#61C0A2",
+                               "#61C0C0", "#61AEC0", "#6161C0", "#A261C0", "#C061C0", "#C061A2"][layer % 11]
+        else:
+            self.background = "#a6c8ff"
+
         self.default_block_width = 150
         self.default_block_height = 50
         self.frame1, self.frame2 = self.create_frame(0), self.create_frame(1)
 
-        self.form.total_credits += course.credit
-        self.form.root.title(
-            f"Course Crafter - {self.form.total_credits} Credits selected")
+        if not is_hovered:
+            self.form.total_credits += course.credit
+            self.form.root.title(
+                f"Course Crafter - {self.form.total_credits} Credits selected")
 
     def __repr__(self):
         return f'{self.course} {self.layer}'
@@ -73,11 +78,13 @@ class CourseBox:
         self.frame1.destroy()
         if self.frame2 is not None:
             self.frame2.destroy()
-        self.form.hovered.remove(self)
-        self.selected_courses.remove(self)
-        self.form.total_credits -= self.course.credit
-        self.form.root.title(
-            f"Course Crafter - {self.form.total_credits} Credits selected")
+        if self in self.form.hovered:    
+            self.form.hovered.remove(self)
+        if self in self.selected_courses:    
+            self.selected_courses.remove(self)
+            self.form.total_credits -= self.course.credit
+            self.form.root.title(
+                f"Course Crafter - {self.form.total_credits} Credits selected")
 
     def add_course_name(self, root):
         name_label = tk.Label(root, text=to_persian(self.course.name), font=(
@@ -103,6 +110,7 @@ class ScheduleForm:
         self.root = root
         self.root.title("Course Crafter")
 
+        self.hovered_course = None
         self.departments = departments
         self.courses = courses
         self.showing_postgraduate = False
@@ -361,10 +369,31 @@ class ScheduleForm:
         self.listbox.config(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="both", padx=0)
 
+        self.listbox.bind("<Motion>", self.on_hover_enter)
+        self.listbox.bind("<Leave>", self.on_hover_exit)
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
         self.listbox.bind("<Double-1>", self.add_course)
 
         list_frame.pack(side="top", fill="x", pady=5)
+
+    def on_hover_enter(self, event):
+        index = self.listbox.index("@%s,%s" % (event.x, event.y))
+        if index >= 0:
+            if self.hovered_course:
+                if self.hovered_course.course.id != self.listbox_courses[index].id or \
+                        self.hovered_course.course.group != self.listbox_courses[index].group:
+                    self.hovered_course.delete_box(event)
+                    self.hovered_course = None
+            else:
+                self.selected_course = self.listbox_courses[index]
+                if not self.already_exist(self.selected_course):
+                    self.add_course(event, is_hovered=True)
+
+
+    def on_hover_exit(self, event):
+        if self.hovered_course:
+            self.hovered_course.delete_box(event)
+        self.hovered_course = None
 
     def on_select(self, event):
         selected_index = self.listbox.curselection()
@@ -393,24 +422,27 @@ class ScheduleForm:
             self.course_info_frame, text=to_persian("اطلاعات درس"), anchor="e", justify="right", wraplength=270)
         self.details_label.place(x=0, y=0, width=290)
 
-    def add_course(self, event=None):
-        if self.selected_course == None or self.selected_course.time == "":
+    def add_course(self, event=None, is_hovered=False):
+        if not is_hovered and (self.selected_course == None or self.selected_course.time == ""):
             messagebox.showerror(
                 "Error",
                 "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.",
                 icon="error")
             return
-        if self.already_exist(self.selected_course):
+        if not is_hovered and self.already_exist(self.selected_course) :
             messagebox.showerror(
                 "Error", "The course is already in the schedule.", icon="error")
             return
         if self.get_layer(self.selected_course) > 0:
             course_box = CourseBox(
-                self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer(self.selected_course))
+                self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer(self.selected_course), is_hovered=is_hovered)
         else:
             course_box = CourseBox(
-                self.grid_frame, self.selected_course, self.grid_courses, self)
-        self.grid_courses.append(course_box)
+                self.grid_frame, self.selected_course, self.grid_courses, self, is_hovered=is_hovered)
+        if is_hovered:
+            self.hovered_course = course_box
+        else:
+            self.grid_courses.append(course_box)
 
     def get_layer(self, course):
         layer = 0
