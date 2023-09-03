@@ -55,3 +55,55 @@ def get_department_and_courses():
     Department.save_to_file(departments, "departments.cc")
     Course.save_to_file(courses, "courses.cc")
     return departments, courses
+
+
+def login(username, password):
+    session = requests.session()
+    response = session.post("https://edu.sharif.edu/login.do", data={
+        "username": username,
+        "password": password,
+        "command": "login",
+    })
+    if session.cookies.get("JSESSIONID"):
+        session.post("https://edu.sharif.edu/action.do", data={
+            "changeMenu": "OnlineRegistration",
+            "isShowMenu": "",
+            "id": "",
+            "commandMessage": "",
+            "defaultCss": "",
+        })
+        session.post("https://edu.sharif.edu/register.do", data={
+            "changeMenu": "OnlineRegistration*OfficalLessonListShow",
+            "isShowMenu": "",
+        })
+        return session
+    return None
+
+
+def get_finals_from_department(session, department_id):
+    response = session.post("https://edu.sharif.edu/register.do", data={
+        "level": "0",
+        "teacher_name": "",
+        "sort_item": "1",
+        "depID": str(department_id)
+    })
+    if response.status_code != 200:
+        return None
+    soup = BeautifulSoup(response.content, "html.parser")
+    courses = {}
+    tables = soup.find_all("table", {"class": "contentTable"})
+    for table in tables:
+        rows = table.find_all("tr")
+        rows = rows[2:]
+        for row in rows:
+            cols = row.find_all("td")
+            try:
+                course_id = int(cols[0].get_text(strip=True))
+                course_group = int(cols[1].get_text(strip=True))
+                course_units = int(cols[2].get_text(strip=True))
+            except:
+                continue
+            final_time = cols[8].get_text(strip=True)
+            course_key = f'{course_id}-{course_group}-{course_units}'
+            courses[course_key] = final_time
+    return courses
