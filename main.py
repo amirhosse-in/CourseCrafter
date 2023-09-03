@@ -119,8 +119,16 @@ class ScheduleForm:
 
         self.create_left_frame()
         self.create_right_frame()
+        self.create_menu()
 
+    def create_menu(self):
+        menu = tk.Menu(self.root)
+        self.root.config(menu=menu)
+        file_menu = tk.Menu(menu)
+        menu.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Save (Ctrl + S)", command=self.save)
         self.root.bind('<Control-s>', self.save)
+        file_menu.add_command(label="Load (Ctrl + O)", command=self.load)
         self.root.bind('<Control-o>', self.load)
 
     def create_right_frame(self):
@@ -408,12 +416,6 @@ if __name__ == "__main__":
 
     root = tk.Tk()
     root.minsize(1250, 750)
-    menu = tk.Menu(root)
-    root.config(menu=menu)
-    file_menu = tk.Menu(menu)
-    menu.add_cascade(label="File", menu=file_menu)
-    file_menu.add_command(label="Save", command=lambda: ScheduleForm.save())
-    file_menu.add_command(label="Load", command=lambda: ScheduleForm.load())
     app = ScheduleForm(root, departments, courses)
     root.mainloop()
 
