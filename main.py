@@ -7,6 +7,7 @@ from models import *
 from bidi.algorithm import get_display
 import edu
 import arabic_reshaper
+import threading
 
 
 class CourseBox:
@@ -26,7 +27,7 @@ class CourseBox:
         self.form.total_credits += course.credit
         self.form.root.title(
             f"Course Crafter - {self.form.total_credits} Credits selected")
-    
+
     def __repr__(self):
         return f'{self.course} {self.layer}'
 
@@ -35,7 +36,7 @@ class CourseBox:
             return None
         x, y, height = self.calculate_position(day)
         frame = tk.Frame(self.root, width=self.default_block_width - 2 -
-                                          self.layer * 5, height=height - 1 - self.layer * 3, bg=self.background)
+                         self.layer * 5, height=height - 1 - self.layer * 3, bg=self.background)
         frame.propagate(False)
         frame.place(x=x + self.layer * 5, y=y + self.layer * 3)
         frame.bind("<Button-1>", self.delete_box)
@@ -65,7 +66,7 @@ class CourseBox:
             (self.course.start[1] / 60) * self.default_block_height) + pad_y  # calculating top_left Y
 
         height = int(((self.course.end[0] * 60 + self.course.end[1]) - (
-                self.course.start[0] * 60 + self.course.start[1])) / 60 * self.default_block_height)
+            self.course.start[0] * 60 + self.course.start[1])) / 60 * self.default_block_height)
         return x, y, height
 
     def delete_box(self, event):
@@ -119,6 +120,65 @@ class ScheduleForm:
 
         self.create_left_frame()
         self.create_right_frame()
+        self.create_menu()
+
+    def create_menu(self):
+        menu = tk.Menu(self.root)
+        self.root.config(menu=menu)
+        file_menu = tk.Menu(menu)
+        menu.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Save (Ctrl + S)", command=self.save)
+        self.root.bind('<Control-s>', self.save)
+        file_menu.add_command(label="Load (Ctrl + O)", command=self.load)
+        self.root.bind('<Control-o>', self.load)
+        course_menu = tk.Menu(menu)
+        menu.add_cascade(label="Course", menu=course_menu)
+        course_menu.add_command(label="Get Finals", command=self.get_finals)
+
+    def get_finals(self):
+        login_window = tk.Toplevel(self.root)
+        login_window.title("Login")
+        login_window.geometry("200x100")
+        username_label = tk.Label(login_window, text="Username:")
+        username_label.grid(row=0, column=0)
+        username_entry = tk.Entry(login_window)
+        username_entry.grid(row=0, column=1)
+        password_label = tk.Label(login_window, text="Password:")
+        password_label.grid(row=1, column=0)
+        password_entry = tk.Entry(login_window, show="*")
+        password_entry.grid(row=1, column=1)
+        login_button = tk.Button(login_window, text="Login", command=lambda: self.get_finals_from_edu(
+            username_entry.get(), password_entry.get(), login_window))
+        login_button.grid(row=2, column=0, columnspan=2)
+
+    def get_finals_from_edu(self, username, password, login_window):
+        pbar = ttk.Progressbar(login_window, orient="horizontal",
+                               length=200, mode="determinate", maximum=100, value=0)
+        pbar.grid(row=3, column=0, columnspan=2)
+        login_window.update()
+        session = edu.login(username, password)
+        if session is None:
+            messagebox.showerror(
+                "Error", "Wrong username or password.", icon="error")
+            return
+        th = threading.Thread(
+            target=lambda: self.get_finals_after_login(session, pbar))
+        th.start()
+
+    def get_finals_after_login(self, session, pbar):
+        for department in self.departments:
+            courses = edu.get_finals_from_department(session, department.id)
+            if courses is None:
+                messagebox.showerror(
+                    "Error", "Error getting courses.", icon="error")
+                return
+            pbar['value'] += 100 / len(self.departments)
+            for course in self.courses:
+                key = f'{course.id}-{course.group}-{course.credit}'
+                if key in courses:
+                    course.final = courses[key]
+        edu.Course.save_to_file(self.courses, "courses.cc")
+        messagebox.showinfo("Done", "Done!", icon="info")
 
     def create_right_frame(self):
         self.days = ['پنجشنبه', 'چهار شنبه',
@@ -146,7 +206,8 @@ class ScheduleForm:
             day_frame.propagate(False)
             day_frame.pack(side="left")
         # putting clock column
-        clock_frame = tk.Frame(days_frame, width=width / 2, height=height * 0.3)
+        clock_frame = tk.Frame(
+            days_frame, width=width / 2, height=height * 0.3)
         clock_frame.pack(side="left")
         days_frame.pack(side="top")
 
@@ -177,7 +238,6 @@ class ScheduleForm:
         self.create_search_box(self.left_frame)
         self.create_listbox(self.left_frame)
         self.create_course_info(self.left_frame)
-        self.create_buttons(self.left_frame)
 
     def create_left_first_row(self, root):
         self.left_first_row = tk.Frame(root)
@@ -289,6 +349,7 @@ class ScheduleForm:
                           f"گروه: {self.selected_course.group}\n" \
                           f"واحد: {self.selected_course.credit}\n" \
                           f"مدرس: {self.selected_course.instructor}\n" \
+                          f"امتحان: {self.selected_course.final}\n" \
                           f"زمان کلاس: {self.selected_course.time}\n" \
                           f"توضیحات: {self.selected_course.details}\n" \
                           f"کلاس مجازی:\n{self.selected_course.virtual_class}"
@@ -304,23 +365,6 @@ class ScheduleForm:
         self.details_label = tk.Label(
             self.course_info_frame, text=to_persian("اطلاعات درس"), anchor="e", justify="right", wraplength=270)
         self.details_label.place(x=0, y=0, width=290)
-
-    def create_buttons(self, root):
-        buttons_frame = tk.Frame(root)
-
-        self.add_course_button = tk.Button(
-            buttons_frame, text="Add Course", command=self.add_course)
-        self.add_course_button.pack(side="right", fill="y")
-
-        self.save_course_button = tk.Button(
-            buttons_frame, text="Save", command=self.save)
-        self.save_course_button.pack(side="left", fill="y")
-
-        self.load_course_button = tk.Button(
-            buttons_frame, text="Load", command=self.load)
-        self.load_course_button.pack(side="left", fill="y")
-
-        buttons_frame.pack(side="top")
 
     def add_course(self, event=None):
         if self.selected_course == None or self.selected_course.time == "":
@@ -365,9 +409,9 @@ class ScheduleForm:
         # Insert items into the Listbox
         for course in self.listbox_courses:
             # convert the name to persian
-            self.listbox.insert(tk.END, to_persian(course.name))
+            self.listbox.insert(tk.END, to_persian(course.name)[:40])
 
-    def save(self):
+    def save(self, event=None):
         file = filedialog.asksaveasfile(
             title="Save File", defaultextension=".cc")
         if file:
@@ -379,7 +423,7 @@ class ScheduleForm:
         else:
             messagebox.showerror("Error", "Error.", icon="error")
 
-    def load(self):
+    def load(self, event=None):
         file = filedialog.askopenfile(title="Open", defaultextension=".cc")
         if file:
             courses = Course.read_from_file(file.name)
@@ -422,7 +466,6 @@ if __name__ == "__main__":
         edu.Department.save_to_file(departments, "departments.cc")
 
     root = tk.Tk()
-    root.minsize(1250, 850)
+    root.minsize(1250, 750)
     app = ScheduleForm(root, departments, courses)
     root.mainloop()
-
