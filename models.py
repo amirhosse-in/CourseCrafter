@@ -22,7 +22,7 @@ class Department:
 
 
 class Course:
-    def __init__(self, id, group, credit, name, instructor, time, details, virtual_class, postgraduate, final=None):
+    def __init__(self, id, group, credit, name, instructor, time, details, virtual_class, postgraduate, final=''):
         self.id = id
         self.group = group
         self.credit = credit
