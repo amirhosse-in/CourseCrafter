@@ -78,9 +78,9 @@ class CourseBox:
         self.frame1.destroy()
         if self.frame2 is not None:
             self.frame2.destroy()
-        if self in self.form.hovered:    
+        if self in self.form.hovered:
             self.form.hovered.remove(self)
-        if self in self.selected_courses:    
+        if self in self.selected_courses:
             self.selected_courses.remove(self)
             self.form.total_credits -= self.course.credit
             self.form.root.title(
@@ -389,7 +389,6 @@ class ScheduleForm:
                 if not self.already_exist(self.selected_course):
                     self.add_course(event, is_hovered=True)
 
-
     def on_hover_exit(self, event):
         if self.hovered_course:
             self.hovered_course.delete_box(event)
@@ -429,7 +428,7 @@ class ScheduleForm:
                 "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.",
                 icon="error")
             return
-        if not is_hovered and self.already_exist(self.selected_course) :
+        if not is_hovered and self.already_exist(self.selected_course):
             messagebox.showerror(
                 "Error", "The course is already in the schedule.", icon="error")
             return
@@ -514,15 +513,20 @@ def to_persian(txt):
 
 
 if __name__ == "__main__":
+
+    updated_data = ApplicationData(*edu.get_department_and_courses())
+
     try:
         # Reading saved information
-        departments = Department.read_from_file("departments.cc")
-        courses = Course.read_from_file("courses.cc")
+        local_data = ApplicationData.load()
     except:
-        # Getting information from edu list
-        departments, courses = edu.get_department_and_courses()
-        Course.save_to_file(courses, "courses.cc")
-        Department.save_to_file(departments, "departments.cc")
+        local_data = None
+
+    if not (local_data and local_data.is_data_uptodate(hash(updated_data))):
+        print('in here')
+        local_data = updated_data
+        local_data.save()
+    departments, courses = local_data.data
 
     root = tk.Tk()
     root.minsize(1250, 750)
