@@ -1,6 +1,8 @@
 import pickle
 import re
 
+from error_handler import io_error_handler
+
 
 class Department:
     def __init__(self, department_id, department_name):
@@ -10,12 +12,14 @@ class Department:
     def __repr__(self):
         return self.name
 
+    @io_error_handler
     @staticmethod
     def save_to_file(array, address):
         with open(address, "wb") as file:
             pickle.dump(array, file)
 
     @staticmethod
+    @io_error_handler
     def read_from_file(address):
         with open(address, "rb") as file:
             return pickle.load(file)
@@ -42,11 +46,13 @@ class Course:
         return f'{self.name} {self.instructor} {self.group}'
 
     @staticmethod
+    @io_error_handler
     def save_to_file(array, address):
         with open(address, "wb") as file:
             pickle.dump(array, file)
 
     @staticmethod
+    @io_error_handler
     def read_from_file(address):
         with open(address, "rb") as file:
             return pickle.load(file)
