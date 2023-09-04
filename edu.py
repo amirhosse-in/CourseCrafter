@@ -3,8 +3,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 from models import *
+from error_handler import connection_error_handler
 
 
+@connection_error_handler
 def get_department_and_courses():
     departments = []
     courses = []

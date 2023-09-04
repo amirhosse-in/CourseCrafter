@@ -512,23 +512,38 @@ def to_persian(txt):
     return txt
 
 
+def check_for_updated_courses(local_data: ApplicationData):
+    """ Takes local saved data and compares it to online data, updates it if there's a mismatch """
+    # TODO: Add to drop down menus
+    try:
+        updated_data = ApplicationData(*edu.get_department_and_courses())
+    except:
+        updated_data = local_data
+
+    if not (local_data or updated_data):
+        messagebox.showerror(
+            "Error", 'No Local data or Internet connection, there is no data to show')
+        return
+
+    if not (local_data and local_data.is_data_uptodate(hash(updated_data))):
+        local_data = updated_data
+        local_data.save()
+    return local_data
+
+
 if __name__ == "__main__":
-
-    updated_data = ApplicationData(*edu.get_department_and_courses())
-
     try:
         # Reading saved information
         local_data = ApplicationData.load()
     except:
         local_data = None
+    local_data = check_for_updated_courses(local_data)
 
-    if not (local_data and local_data.is_data_uptodate(hash(updated_data))):
-        print('in here')
-        local_data = updated_data
-        local_data.save()
-    departments, courses = local_data.data
+    if local_data:
+        # Run the app only if there is something to show
+        departments, courses = local_data.data
 
-    root = tk.Tk()
-    root.minsize(1250, 750)
-    app = ScheduleForm(root, departments, courses)
-    root.mainloop()
+        root = tk.Tk()
+        root.minsize(1250, 750)
+        app = ScheduleForm(root, departments, courses)
+        root.mainloop()

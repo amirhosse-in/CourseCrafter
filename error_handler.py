@@ -1,6 +1,7 @@
 import sys
 import pickle
 from tkinter import messagebox
+import requests
 
 
 def io_error_handler(func):
@@ -18,5 +19,18 @@ def io_error_handler(func):
             messagebox.showerror(
                 "Error", "Could not read the save file, is it corrupted?")
         sys.exit(1)
+
+    return inner1
+
+
+def connection_error_handler(func):
+    # Connection error handler decorator
+    def inner1(*args, **kwargs):
+
+        try:
+            return func(*args, **kwargs)
+        except requests.exceptions.ConnectionError:
+            messagebox.showerror(
+                "Connection Error", "There was a problem with your connection, please check internet connectivity and try again")
 
     return inner1
