@@ -1,5 +1,6 @@
 import pickle
 import re
+from typing import List
 
 from error_handler import io_error_handler
 
@@ -20,7 +21,7 @@ class Department:
 
     @staticmethod
     @io_error_handler
-    def read_from_file(address):
+    def read_from_file(address) -> List['Department']:
         with open(address, "rb") as file:
             return pickle.load(file)
 
@@ -53,7 +54,7 @@ class Course:
 
     @staticmethod
     @io_error_handler
-    def read_from_file(address):
+    def read_from_file(address) -> List['Course']:
         with open(address, "rb") as file:
             return pickle.load(file)
 

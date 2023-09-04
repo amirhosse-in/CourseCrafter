@@ -9,11 +9,13 @@ def io_error_handler(func):
 
         try:
             return func(*args, **kwargs)
-        except IOError:
+        except FileNotFoundError:
+            raise FileNotFoundError() # Handled in the code logic
+        except PermissionError:
             messagebox.showerror(
                 "Error", "Could not open the file, check the file's permissions")
         except pickle.PickleError:
-            messagebox.showerror("Error", "Could not pickle the {} object.")
+            messagebox.showerror("Error", "Could not read the save file, is it corrupted?")
         sys.exit(1)
 
     return inner1

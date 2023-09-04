@@ -521,8 +521,8 @@ if __name__ == "__main__":
     except:
         # Getting information from edu list
         departments, courses = edu.get_department_and_courses()
-        edu.Course.save_to_file(courses, "courses.cc")
-        edu.Department.save_to_file(departments, "departments.cc")
+        Course.save_to_file(courses, "courses.cc")
+        Department.save_to_file(departments, "departments.cc")
 
     root = tk.Tk()
     root.minsize(1250, 750)
