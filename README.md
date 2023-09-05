@@ -5,9 +5,6 @@ CourseCrafter is a Python project modeled after the *term.inator* project. It's 
 ## Overview
 CourseCrafter automates the course information update process, relieving you of the need to be concerned about keeping the database current. The application automatically fetches the latest course data from edu.sharif.edu/list/courses and updates itself accordingly.
 
-## Updating the Courses List
-To refresh the courses list, simply delete the .cc files located alongside the .py files and execute the program.
-
 ## Requirements
 
 Before running the CourseCrafter project, ensure you have the following installed:
