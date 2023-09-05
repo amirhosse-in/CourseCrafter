@@ -3,8 +3,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 from models import *
+from error_handler import connection_error_handler
 
 
+@connection_error_handler
 def get_department_and_courses():
     departments = []
     courses = []
@@ -52,8 +54,6 @@ def get_department_and_courses():
     else:
         raise LookupError("No 'courses' variable found in the content.")
 
-    Department.save_to_file(departments, "departments.cc")
-    Course.save_to_file(courses, "courses.cc")
     return departments, courses
 
 

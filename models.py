@@ -1,24 +1,17 @@
 import pickle
 import re
+from typing import List
+
+from error_handler import io_error_handler
 
 
 class Department:
     def __init__(self, department_id, department_name):
         self.id = department_id
         self.name = department_name
-    
+
     def __repr__(self):
         return self.name
-
-    @staticmethod
-    def save_to_file(array, address):
-        with open(address, "wb") as file:
-            pickle.dump(array, file)
-
-    @staticmethod
-    def read_from_file(address):
-        with open(address, "rb") as file:
-            return pickle.load(file)
 
 
 class Course:
@@ -37,19 +30,13 @@ class Course:
             self.days, self.start, self.end = Course.get_day_and_hour(time)
         except:
             print(f"There is no time for Course {id}:{name}")
-        
+
     def __repr__(self):
         return f'{self.name} {self.instructor} {self.group}'
 
-    @staticmethod
-    def save_to_file(array, address):
-        with open(address, "wb") as file:
-            pickle.dump(array, file)
-
-    @staticmethod
-    def read_from_file(address):
-        with open(address, "rb") as file:
-            return pickle.load(file)
+    def __hash__(self) -> int:
+        return hash(str([self.id, self.group, self.credit, self.name, self.instructor, self.time,
+                        self.details, self.virtual_class, self.final, self.postgraduate]))
 
     @staticmethod
     def get_day_and_hour(s):
@@ -115,3 +102,38 @@ class Course:
 
     def get_searchable_string(self):
         return (f"{self.id} {self.name} {self.instructor} {self.details}").replace('ك', 'ک').replace('ي', 'ی')
+
+
+class ApplicationData:
+    courses: List[Course] = []
+    departments: List[Department] = []
+
+    def __init__(self, departments_list: Department, courses_list: Course):
+        self.departments = departments_list
+        self.courses = courses_list
+        # TODO: save users's username and password with device-specific encryption
+
+    @property
+    def data(self):
+        """ List of departments and courses """
+        return self.departments, self.courses
+
+    def __hash__(self) -> int:
+        return hash(''.join(str(hash(c)) for c in self.courses))
+
+    def is_data_uptodate(self, new_hash):
+        """ Checks if the current app data is recent by comparing it to the incoming hash """
+        return hash(self) == new_hash
+
+    @io_error_handler
+    def save(self):
+        """ Saves the list of courses and departments to 'appdata.cc' file """
+        with open('appdata.cc', 'wb') as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    @io_error_handler
+    def load() -> 'ApplicationData':
+        """ Loads application data from 'appdata.cc' file and returns an `ApplicationData` object"""
+        with open('appdata.cc', 'rb') as f:
+            return pickle.load(f)
