@@ -106,6 +106,7 @@ class Course:
 
 class ApplicationData:
     courses: List[Course] = []
+    added_courses: List[Course] = []
     departments: List[Department] = []
 
     def __init__(self, departments_list: Department, courses_list: Course):
@@ -137,3 +138,7 @@ class ApplicationData:
         """ Loads application data from 'appdata.cc' file and returns an `ApplicationData` object"""
         with open('appdata.cc', 'rb') as f:
             return pickle.load(f)
+
+    def set_added_courses(self, course_List: List[Course]):
+        self.added_courses = course_List
+        self.save()
