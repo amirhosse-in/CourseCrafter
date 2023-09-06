@@ -110,7 +110,7 @@ class ScheduleForm:
         self.root = root
         self.root.title("Course Crafter")
 
-        self.hovered_course = None
+        self.hovered_course_box = None # For mouse hover
         self.departments = departments
         self.courses = courses
         self.showing_postgraduate = False
@@ -124,7 +124,7 @@ class ScheduleForm:
         self.canvas = tk.Canvas(self.root, width=1260, height=735)
         self.canvas.pack()
 
-        self.hovered = set()
+        self.hovered = set() # For selected courses in the grid
 
         self.create_left_frame()
         self.create_right_frame()
@@ -379,20 +379,21 @@ class ScheduleForm:
     def on_hover_enter(self, event):
         index = self.listbox.index("@%s,%s" % (event.x, event.y))
         if index >= 0:
-            if self.hovered_course:
-                if self.hovered_course.course.id != self.listbox_courses[index].id or \
-                        self.hovered_course.course.group != self.listbox_courses[index].group:
-                    self.hovered_course.delete_box(event)
-                    self.hovered_course = None
+            if self.hovered_course_box:
+                if self.hovered_course_box.course.id != self.listbox_courses[index].id or \
+                        self.hovered_course_box.course.group != self.listbox_courses[index].group:
+                    self.hovered_course_box.delete_box(event)
+                    self.hovered_course_box = None
             else:
-                self.selected_course = self.listbox_courses[index]
-                if not self.already_exist(self.selected_course):
-                    self.add_course(event, is_hovered=True)
+                if not self.already_exist(self.listbox_courses[index]):
+                    self.hovered_course_box = CourseBox(
+                    self.grid_frame, self.listbox_courses[index], self.grid_courses, self, layer=self.get_layer(self.listbox_courses[index]), is_hovered=True)
+
 
     def on_hover_exit(self, event):
-        if self.hovered_course:
-            self.hovered_course.delete_box(event)
-        self.hovered_course = None
+        if self.hovered_course_box:
+            self.hovered_course_box.delete_box(event)
+        self.hovered_course_box = None
 
     def on_select(self, event):
         selected_index = self.listbox.curselection()
@@ -421,27 +422,20 @@ class ScheduleForm:
             self.course_info_frame, text=to_persian("اطلاعات درس"), anchor="e", justify="right", wraplength=270)
         self.details_label.place(x=0, y=0, width=290)
 
-    def add_course(self, event=None, is_hovered=False):
-        if not is_hovered and (self.selected_course == None or self.selected_course.time == ""):
+    def add_course(self, event=None):
+        if self.selected_course == None or self.selected_course.time == "":
             messagebox.showerror(
                 "Error",
                 "The course does not have a specified time, if you think that the time is specified, delete the .cc files and run the program again.",
                 icon="error")
             return
-        if not is_hovered and self.already_exist(self.selected_course):
+        if self.already_exist(self.selected_course):
             messagebox.showerror(
                 "Error", "The course is already in the schedule.", icon="error")
             return
-        if self.get_layer(self.selected_course) > 0:
-            course_box = CourseBox(
-                self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer(self.selected_course), is_hovered=is_hovered)
-        else:
-            course_box = CourseBox(
-                self.grid_frame, self.selected_course, self.grid_courses, self, is_hovered=is_hovered)
-        if is_hovered:
-            self.hovered_course = course_box
-        else:
-            self.grid_courses.append(course_box)
+        course_box = CourseBox(
+            self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer(self.selected_course))
+        self.grid_courses.append(course_box)
 
     def get_layer(self, course):
         layer = 0
