@@ -385,7 +385,7 @@ class ScheduleForm:
                     self.hovered_course_box.delete_box(event)
                     self.hovered_course_box = None
             else:
-                if not self.already_exist(self.listbox_courses[index]):
+                if not self.already_exist(self.listbox_courses[index]) and not (self.listbox_courses[index] == None or self.listbox_courses[index].time == ""):
                     self.hovered_course_box = CourseBox(
                     self.grid_frame, self.listbox_courses[index], self.grid_courses, self, layer=self.get_layer(self.listbox_courses[index]), is_hovered=True)
 
