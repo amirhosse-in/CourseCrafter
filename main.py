@@ -106,11 +106,11 @@ class CourseBox:
 
 
 class ScheduleForm:
-    def __init__(self, root, departments, courses):
+    def __init__(self, root: tk.Tk, departments, courses):
         self.root = root
         self.root.title("Course Crafter")
 
-        self.hovered_course_box = None # For mouse hover
+        self.hovered_course_box = None  # For mouse hover
         self.departments = departments
         self.courses = courses
         self.showing_postgraduate = False
@@ -124,11 +124,13 @@ class ScheduleForm:
         self.canvas = tk.Canvas(self.root, width=1260, height=735)
         self.canvas.pack()
 
-        self.hovered = set() # For selected courses in the grid
+        self.hovered = set()  # For selected courses in the grid
 
         self.create_left_frame()
         self.create_right_frame()
         self.create_menu()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
+        self.root.mainloop()
 
     def create_menu(self):
         menu = tk.Menu(self.root)
@@ -201,6 +203,7 @@ class ScheduleForm:
         th.start()
 
     def get_finals_after_login(self, session, pbar):
+        global local_data
         for department in self.departments:
             courses = edu.get_finals_from_department(session, department.id)
             if courses is None:
@@ -212,7 +215,8 @@ class ScheduleForm:
                 key = f'{course.id}-{course.group}-{course.credit}'
                 if key in courses:
                     course.final = courses[key]
-        edu.Course.save_to_file(self.courses, "courses.cc")
+        local_data.courses = courses
+        local_data.save()
         messagebox.showinfo("Done", "Done!", icon="info")
 
     def create_right_frame(self):
@@ -387,8 +391,7 @@ class ScheduleForm:
             else:
                 if not self.already_exist(self.listbox_courses[index]) and not (self.listbox_courses[index] == None or self.listbox_courses[index].time == ""):
                     self.hovered_course_box = CourseBox(
-                    self.grid_frame, self.listbox_courses[index], self.grid_courses, self, layer=self.get_layer(self.listbox_courses[index]), is_hovered=True)
-
+                        self.grid_frame, self.listbox_courses[index], self.grid_courses, self, layer=self.get_layer(self.listbox_courses[index]), is_hovered=True)
 
     def on_hover_exit(self, event):
         if self.hovered_course_box:
@@ -463,33 +466,32 @@ class ScheduleForm:
             # convert the name to persian
             self.listbox.insert(tk.END, to_persian(course.name)[:40])
 
+    def save_added_courses(self):
+        global local_data
+        courses = []
+        for course_box in self.grid_courses:
+            courses.append(course_box.course)
+        local_data.set_added_courses(courses)
+
     def save(self, event=None):
-        file = filedialog.asksaveasfile(
-            title="Save File", defaultextension=".cc")
-        if file:
-            courses = []
-            for course_box in self.grid_courses:
-                courses.append(course_box.course)
-            Course.save_to_file(courses, file.name)
-            messagebox.showinfo("Done", "Saved succesfully!", icon="info")
-        else:
-            messagebox.showerror("Error", "Error.", icon="error")
+        self.save_added_courses()
+        messagebox.showinfo("Done", "Saved succesfully!", icon="info")
 
     def load(self, event=None):
-        file = filedialog.askopenfile(title="Open", defaultextension=".cc")
-        if file:
-            courses = Course.read_from_file(file.name)
-            for course in courses:
-                if self.already_exist(course):
-                    continue
-                if self.get_layer(course) > 0:
-                    course_box = CourseBox(
-                        self.grid_frame, course, self.grid_courses, self, layer=self.get_layer(course))
-                else:
-                    course_box = CourseBox(
-                        self.grid_frame, course, self.grid_courses, self)
-                self.grid_courses.append(course_box)
-            messagebox.showinfo("Done", "Done!", icon="info")
+        global local_data
+        local_data = ApplicationData.load()
+        courses = local_data.added_courses
+        for course in courses:
+            if self.already_exist(course):
+                continue
+            if self.get_layer(course) > 0:
+                course_box = CourseBox(
+                    self.grid_frame, course, self.grid_courses, self, layer=self.get_layer(course))
+            else:
+                course_box = CourseBox(
+                    self.grid_frame, course, self.grid_courses, self)
+            self.grid_courses.append(course_box)
+        messagebox.showinfo("Done", "Done!", icon="info")
 
     def already_exist(self, course):
         for course_box in self.grid_courses:
@@ -497,6 +499,11 @@ class ScheduleForm:
             if _course.id == course.id and _course.group == course.group:
                 return True
         return False
+
+    def on_quit(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.save_added_courses()
+            self.root.destroy()
 
 
 def to_persian(txt):
@@ -520,7 +527,11 @@ def check_for_updated_courses(local_data: ApplicationData):
         return
 
     if not (local_data and local_data.is_data_uptodate(hash(updated_data))):
+        added_courses = []
+        if local_data:
+            added_courses = local_data.added_courses
         local_data = updated_data
+        local_data.added_courses = added_courses
         local_data.save()
     return local_data
 
@@ -540,4 +551,3 @@ if __name__ == "__main__":
         root = tk.Tk()
         root.minsize(1250, 750)
         app = ScheduleForm(root, departments, courses)
-        root.mainloop()

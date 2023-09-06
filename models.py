@@ -35,8 +35,8 @@ class Course:
         return f'{self.name} {self.instructor} {self.group}'
 
     def __hash__(self) -> int:
-        return hash(str([self.id, self.group, self.credit, self.name, self.instructor, self.time,
-                        self.details, self.virtual_class, self.final, self.postgraduate]))
+        return hash(str([self.id, self.group, self.credit, self.name, self.instructor,
+                         self.time, self.details, self.virtual_class, self.postgraduate]))
 
     @staticmethod
     def get_day_and_hour(s):
@@ -106,6 +106,7 @@ class Course:
 
 class ApplicationData:
     courses: List[Course] = []
+    added_courses: List[Course] = []
     departments: List[Department] = []
 
     def __init__(self, departments_list: Department, courses_list: Course):
@@ -137,3 +138,7 @@ class ApplicationData:
         """ Loads application data from 'appdata.cc' file and returns an `ApplicationData` object"""
         with open('appdata.cc', 'rb') as f:
             return pickle.load(f)
+
+    def set_added_courses(self, course_List: List[Course]):
+        self.added_courses = course_List
+        self.save()
