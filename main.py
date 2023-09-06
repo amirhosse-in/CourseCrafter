@@ -130,17 +130,12 @@ class ScheduleForm:
         self.create_right_frame()
         self.create_menu()
         self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
+        self.load()
         self.root.mainloop()
 
     def create_menu(self):
         menu = tk.Menu(self.root)
         self.root.config(menu=menu)
-        file_menu = tk.Menu(menu)
-        menu.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Save (Ctrl + S)", command=self.save)
-        self.root.bind('<Control-s>', self.save)
-        file_menu.add_command(label="Load (Ctrl + O)", command=self.load)
-        self.root.bind('<Control-o>', self.load)
         course_menu = tk.Menu(menu)
         menu.add_cascade(label="Course", menu=course_menu)
         course_menu.add_command(label="Get Finals", command=self.get_finals)
@@ -491,7 +486,7 @@ class ScheduleForm:
                 course_box = CourseBox(
                     self.grid_frame, course, self.grid_courses, self)
             self.grid_courses.append(course_box)
-        messagebox.showinfo("Done", "Done!", icon="info")
+
 
     def already_exist(self, course):
         for course_box in self.grid_courses:
