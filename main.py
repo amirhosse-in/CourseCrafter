@@ -527,7 +527,11 @@ def check_for_updated_courses(local_data: ApplicationData):
         return
 
     if not (local_data and local_data.is_data_uptodate(hash(updated_data))):
+        added_courses = []
+        if local_data:
+            added_courses = local_data.added_courses
         local_data = updated_data
+        local_data.added_courses = added_courses
         local_data.save()
     return local_data
 

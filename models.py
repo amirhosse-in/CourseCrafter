@@ -35,8 +35,8 @@ class Course:
         return f'{self.name} {self.instructor} {self.group}'
 
     def __hash__(self) -> int:
-        return hash(str([self.id, self.group, self.credit, self.name, self.instructor, self.time,
-                        self.details, self.virtual_class, self.final, self.postgraduate]))
+        return hash(str([self.id, self.group, self.credit, self.name, self.instructor,
+                         self.time, self.details, self.virtual_class, self.postgraduate]))
 
     @staticmethod
     def get_day_and_hour(s):
