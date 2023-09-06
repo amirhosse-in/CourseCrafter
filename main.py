@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
+import atexit
 from models import *
 from bidi.algorithm import get_display
 import edu
@@ -17,7 +18,6 @@ class CourseBox:
         self.selected_courses = selected_courses
         self.form = form
         self.layer = layer
-
         if not is_hovered:
             self.background = ["#C08261", "#C0A261", "#C0C061", "#AEC061", "#61C0A2",
                                "#61C0C0", "#61AEC0", "#6161C0", "#A261C0", "#C061C0", "#C061A2"][layer % 11]
@@ -82,6 +82,7 @@ class CourseBox:
             self.form.hovered.remove(self)
         if self in self.selected_courses:
             self.selected_courses.remove(self)
+            self.form.save_added_courses()
             self.form.total_credits -= self.course.credit
             self.form.root.title(
                 f"Course Crafter - {self.form.total_credits} Credits selected")
@@ -129,7 +130,6 @@ class ScheduleForm:
         self.create_left_frame()
         self.create_right_frame()
         self.create_menu()
-        self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
         self.load()
         self.root.mainloop()
 
@@ -210,7 +210,7 @@ class ScheduleForm:
                 key = f'{course.id}-{course.group}-{course.credit}'
                 if key in courses:
                     course.final = courses[key]
-        local_data.courses = courses
+        local_data.courses = self.courses
         local_data.save()
         messagebox.showinfo("Done", "Done!", icon="info")
 
@@ -434,6 +434,7 @@ class ScheduleForm:
         course_box = CourseBox(
             self.grid_frame, self.selected_course, self.grid_courses, self, layer=self.get_layer(self.selected_course))
         self.grid_courses.append(course_box)
+        self.save_added_courses()
 
     def get_layer(self, course):
         layer = 0
@@ -495,11 +496,6 @@ class ScheduleForm:
                 return True
         return False
 
-    def on_quit(self):
-        if messagebox.askokcancel("Quit", "Do you want to quit?"):
-            self.save_added_courses()
-            self.root.destroy()
-
 
 def to_persian(txt):
     # check if OS is mac or windows and not linux then return the text
@@ -526,8 +522,7 @@ def check_for_updated_courses(local_data: ApplicationData):
         if local_data:
             added_courses = local_data.added_courses
         local_data = updated_data
-        local_data.added_courses = added_courses
-        local_data.save()
+        local_data.set_added_courses(added_courses)
     return local_data
 
 
@@ -546,3 +541,4 @@ if __name__ == "__main__":
         root = tk.Tk()
         root.minsize(1250, 750)
         app = ScheduleForm(root, departments, courses)
+        
