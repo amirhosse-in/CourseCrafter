@@ -47,7 +47,7 @@ def get_department_and_courses():
             time = course[5]
             details = course[6]
             link = course[7]
-            postgraduate = int(course[8]) != 0
+            postgraduate = False #TODO CHECK HERE #int(course[8]) != 0
             _course = Course(id, group, credit, title, instructor,
                              time, details, link, postgraduate)
             courses.append(_course)
